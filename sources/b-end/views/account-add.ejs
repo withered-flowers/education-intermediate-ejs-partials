@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+</head>
+<body>
+  <!-- Ceritanya ini header -->
+  <nav>
+    <h1><%= title %></h1>
+    <a href="/">Home</a>
+    <a href="/accounts">Accounts</a>
+  </nav>
+
+  <!-- Nanti konten kita masukkan di sini -->
+  <div style="padding-top: 20px; padding-bottom: 20px;">
+    <form action='/accounts/add' method='post'>
+      <div>
+        <label for="acc_name">Account</label>
+        <input type="text" name="acc_name" id="acc_name" />
+      </div>
+      
+      <div>
+        <label for="acc_trans">Transactions</label>
+        <input type="text" name="acc_trans" id="acc_trans" />
+      </div>
+
+      <div>
+        <label for="acc_amount">Amount</label>
+        <input type="number" name="acc_amount" id="acc_amount" step="0.01" />
+      </div>
+
+      <div>
+        <label for="acc_btc_desc">BTC Address</label>
+        <input type="text" name="acc_btc_desc" id="acc_btc_desc" />
+      </div>
+
+      <div>
+        <button type="submit">Add Account</button>
+      </div>
+    </form>
+</div>
+
+  <!-- Ceritanya ini footer -->
+  <footer>
+    &#169; PT. Ini Websiteku Mana Websitemu dot com - 2020
+  </footer>
+</body>
+</html>
