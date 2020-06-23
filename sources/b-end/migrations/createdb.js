@@ -9,16 +9,13 @@ const query =
   btc_address VARCHAR(100) NOT NULL
 );`;
 
-pool.connect((err, client, release) => {
-  client.query(query, [], (err2, res) => {
-    release();
-
-    if(err2) {
-      return console.error(err2.stack);
-    }
-    else {
-      console.log("Success add Table Accounts");
-      pool.end();
-    }
-  })
+pool.query(query, (err, result) => {
+  if(err) {
+    return console.error(err.stack)
+  }
+  else {
+    console.log("Success add table Accounts");
+    // Jangan lupa pool.end() kalau tidak mau menunggu
+    pool.end();
+  }
 });
