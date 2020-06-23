@@ -569,8 +569,11 @@ berhubungan dengan database. Selanjutnya kita akan membuat controller yang
 dibutuhkan untuk menerima input dari browser / user.
 
 ### Langkah 9 - Membuat controllers/controller.js
+Pada langkah ini kita akan membuat handler 
 
+### Langkah 10 - Membuat routes
 
+### Langkah 11 - Membuat app.js !
 
 ## Additional - Review CR-D
 Misalnya sekarang kita akan menambahkan beberapa endpoint sehingga menjadi sbb:
