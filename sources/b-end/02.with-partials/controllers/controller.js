@@ -1,13 +1,20 @@
 const Account = require('../models/account.js');
 
 class Controller {
+  // GET / handler
   static getRootHandler(req, res) {
     res.render('home', {
       title: 'Halaman Utama'
     });
   }
 
+  // GET /accounts handler dan
+  // GET /accounts?q=id handler
   static getAccountRootHandler(req, res) {
+    // Cek apakah q ada atau tidak
+    // Kalau tidak ada = /accounts
+    // Kalau ada = /accounts?q=id
+    // Sama-sama render account-list
     if(req.query.q === undefined) {
       Account.findAll((err, data) => {
         if(err) {

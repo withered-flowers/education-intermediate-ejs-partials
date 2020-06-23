@@ -569,11 +569,157 @@ berhubungan dengan database. Selanjutnya kita akan membuat controller yang
 dibutuhkan untuk menerima input dari browser / user.
 
 ### Langkah 9 - Membuat controllers/controller.js
-Pada langkah ini kita akan membuat handler 
+Pada langkah ini kita akan membuat handler untuk menerima input dari user dan
+melemparkannya kembali ke Model atau View, yaitu dengan membuat Controller !
+
+Controller ini akan dinamakan dengan `controllers/controller.js` dan akan
+menghandle seluruh endpoint yang ada.
+
+Untuk kodenya akan didefinisikan sebagai berikut:
+```javascript
+const Account = require('../models/account.js');
+
+class Controller {
+  // GET / handler
+  static getRootHandler(req, res) {
+    res.render('home', {
+      title: 'Halaman Utama'
+    });
+  }
+
+  // GET /accounts handler dan
+  // GET /accounts?q=id handler
+  static getAccountRootHandler(req, res) {
+    // Cek apakah q ada atau tidak
+    // Kalau tidak ada = /accounts
+    // Kalau ada = /accounts?q=id
+    // Sama-sama render account-list
+    if(req.query.q === undefined) {
+      Account.findAll((err, data) => {
+        if(err) {
+          res.send(err);
+        }
+        else {
+          res.render('account-list', {
+            title: "Account - List",
+            dataAccount: data,
+            specific: false
+          })
+        }
+      });
+    }
+    else {
+      let idInput = Number(req.query.q);
+
+      Account.findOne(idInput, (err, data) => {
+        if(err) {
+          res.send(err);
+        }
+        else {
+          res.render('account-list', {
+            title: "Account - Detail",
+            dataAccount: data,
+            specific: true
+          })
+        }
+      });
+    }
+  }
+}
+
+module.exports = Controller;
+```
+
+Sampai dengan tahap ini artinya kita sudah berhasil untuk menghandle 
+user input / browser input dan endpoint yang ada !
+
+Sekarang saatnya untuk mendefinisikan endpoint yang ada dalam rute rute 
+yang akan dibentuk !
 
 ### Langkah 10 - Membuat routes
+Untuk membuat routes, awalnya kita harus berpikir untuk mengkotak-kotakan, rute
+yang ada, dari aplikasi yang kita buat, terbagi jadi rute `root` atau `/` dan 
+rute `accounts`, sehingga pada folder `routes` kita akan membuat 2 file baru:
+* `accounts.js` untuk semua yang rute yang berhubungan dengan rute `accounts`
+* `index.js` semua rute akan dihandle di sini.
+
+Berdasarkan keterangan di atas, maka kita akan membaut `routes/accounts.js`
+menjadi seperti berikut:
+```javascript
+const express = require('express');
+const router = express.Router();
+
+// Jangan lupa untuk mengimport controller
+const Controller = require('../controllers/controller');
+
+// GET /accounts /
+router.get('/', Controller.getAccountRootHandler);
+
+module.exports = router;
+```
+
+Sedangkan untuk `routes/index.js` akan kita tuliskan sebagai berikut:
+```javascript
+const express = require('express');
+const router = express.Router();
+
+// Jangan lupa untuk mengimport controller
+const Controller = require('../controllers/controller');
+
+const accounts = require('./accounts.js');
+
+router.get('/', Controller.getRootHandler);
+
+router.use('/accounts', accounts);
+
+module.exports = router;
+```
+
+Sampai dengan tahap ini artinya kita sudah membuat:
+* halaman (view) yang memiliki parameter
+* model (data) atau representasi data dari database dalam aplikasi
+* controller (logic) untuk berinteraksi dengan aplikasi
+* routes untuk gerbang atau endpoint dari aplikasi yang kita buat
+
+Selanjutnya, kita akan membuat main apps kita, supaya dapat berjalan, yaitu
+dengan membuat file `app.js`
 
 ### Langkah 11 - Membuat app.js !
+Pada file `app.js` kita akan menggabungkan semua yang ada.
+
+Berikut adalah kode yang akan ditulis pada file `app.js`:
+```javascript
+const express = require('express');
+const app = express();
+
+// Definisikan port yang akan digunakan
+const PORT = 3000;
+
+// Jangan lupa untuk memanggil semua rute yang sudah 
+// didefinisikan
+const routes = require('./routes/index.js');
+
+// Jangan lupa untuk mendefinisikan bahwa kita akan menggunakan
+// templating engine EJS
+app.set('view engine', 'ejs');
+
+// Jangan lupa untuk menggunakan middleware body-parser
+// supaya kita bisa mengambil data dari form
+// bila akan dibuat
+app.use(express.urlencoded({extended: false}));
+
+// Gunakan rute yang sudah kita definisikan
+app.use('/', routes);
+
+app.listen(PORT, () => {
+  console.log(`Aplikasi berjalan di port ${PORT}`);
+});
+```
+
+Sampai dengan tahap ini artinya kita sudah berhasil untuk membuat 
+web apps kita dan sudah bisa kita jalankan !
+
+Selamat 🔥 !
 
 ## Additional - Review CR-D
 Misalnya sekarang kita akan menambahkan beberapa endpoint sehingga menjadi sbb:
@@ -587,6 +733,8 @@ Misalnya sekarang kita akan menambahkan beberapa endpoint sehingga menjadi sbb:
 | GET /accounts/add         | Menampilkan form penambahan account           |
 | POST /accounts/add        | Menghandle form penambahan account            |
 | GET /accounts/del/:id     | Menghapus sebuah account                      |
+
+Bagaimanakah cara membuatnya?
 
 ## References
 [Components - TutorialPoints](https://www.tutorialspoint.com/software_architecture_design/component_based_architecture.htm)
