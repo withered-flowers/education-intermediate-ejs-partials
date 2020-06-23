@@ -194,6 +194,383 @@ pool.query(query, (err, result) => {
 });
 ```
 
+Selanjutnya setelah file ini dibuat, kita akan coba menjalankannya, 
+dan melihatnya pada database kita, apakah tabel `Accounts` sudah
+terbentuk?
+
+### Langkah 5 - Seeding data
+Mencoba dalam pengembangan aplikasi, tak lengkap kl tak ada data dummy.
+
+Pada pembelajaran kali ini juga sudah disediakan data dummy pada 
+file `data/dummy.json`
+
+Oleh karena itu kita akan berusaha untuk memasukkan data yang ada ke dalam
+tabel `Account` yang sudah kita buat.
+
+Caranya adalah dengan membuat sebuah file yang akan digunakan untuk memasukkan
+data, yaitu `seeds/seed.js`
+
+Berikut adalah kode pada file `seeds/seed.js`
+```javascript
+const pool = require('../config/config.js');
+const fs = require('fs');
+
+fs.readFile('./data/dummy.json', 'utf8', (err, data) => {
+  if (err) {
+    console.error(err.stack);
+  }
+  else {
+    data = JSON.parse(data);
+
+    // Karena kita akan membentuk querynya untuk menjadi single query
+    // yang besar, maka kita membutuhkan jumlah data yang ada
+    const maxLen = data.length;
+
+    // Ini adalah query dasar untuk memasukkan data ke dalam tabel
+    // Accounts, masih belum ada valuenya
+    let textQuery =
+      `INSERT INTO "Accounts" 
+        (account, transaction, amount, btc_address) 
+      VALUES `;
+
+    // Ini nanti adalah valuenya
+    let arrValues = [];
+
+    // Di sini kita akan membuat query stringnya
+    for(let ctr = 0; ctr < maxLen; ctr++) {
+
+      // Kita akan memasukkan queryString nya supaya
+      // menjadi sebuah kesatuan yang besar
+      // e.g: 
+      // ($1, $2, $3, $4), ($5, $6, $7, $8), (...)
+      textQuery += 
+        `($${4*ctr +1}, $${4*ctr +2}, $${4*ctr +3}, $${4*ctr +4})`;
+      ctr !== maxLen-1 ? textQuery += ', ' : textQuery += ';';
+
+      // Di sini kita akan melakukan "flattening"
+      // Karena dari bentuk array of object,
+      // kita harus konversi jadi array 1 dimensi saja
+      arrValues.push(
+        data[ctr].account,
+        data[ctr].transaction,
+        data[ctr].amount,
+        data[ctr].btc_address
+      );
+    }
+
+    // Single query
+    pool.query(textQuery, arrValues, (err, result) => {
+      if(err) {
+        console.error(err.stack);
+      }
+      else {
+        // Kita lihat hasil data setelah berhasil dimasukkan seperti apa
+        console.log(result);
+
+        // Konfirmasi saja apabila berhasil
+        console.log("All data In !");
+        
+        // Jangan lupa di-end kalau tidak ingin menunggu
+        pool.end();
+      }
+    });
+  }
+});
+
+```
+
+Setelah file ini selesai kita buat, jangan lupa untuk menjalankannya
+dan melihat hasilnya pada database kita, apakah tabelnya sudah ada data?
+
+### Langkah 6 - Membuat views terlebih dahulu
+Untuk mempersingkat loncatan-loncatan yang ada ketika membuat kode ini nantinya,
+maka kita akan membuat aplikasi ini dari viewnya terlebih dahulu.
+
+Berdasarkan endpoint yang dibutuhkan diketahui bahwa sebenarnya kita membutuhkan
+3 view, untuk `home`, untuk `account-list-semua`, dan untuk 
+`account-list-specific`. Hanya saja kita dapat mengurangi itu menjadi 2 saja,
+yaitu dengan `home` dan `account-list`. 
+
+Oleh karena kita hanya akan membuat 2 view saja, yaitu `views/home.ejs` dan
+`views/account-list.ejs`.
+
+Berdasarkan itu, maka `views/home.ejs` akan terbentuk menjadi seperti berikut:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+</head>
+<body>
+  <!-- Ceritanya ini header -->
+  <nav>
+    <h1><%= title %></h1>
+    <a href="/">Home</a>
+    <a href="/accounts">Accounts</a>
+  </nav>
+
+  <!-- Nanti konten kita masukkan di sini -->
+  <div style="padding-top: 20px; padding-bottom: 20px;">
+    Nanti kita cerita tentang hari ini yah
+  </div>
+
+  <!-- Ceritanya ini footer -->
+  <footer>
+    &#169; PT. Ini Websiteku Mana Websitemu dot com - 2020
+  </footer>
+</body>
+</html>
+```
+
+Dicatat bahwa pada halaman `views/home.ejs` ini membutuhkan sebuah 
+parameter dengan nama `title`.
+
+Selanjutnya untuk `views/account-list.ejs`:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+</head>
+<body>
+  <!-- Ceritanya ini header -->
+  <nav>
+    <h1><%= title %></h1>
+    <a href="/">Home</a>
+    <a href="/accounts">Accounts</a>
+  </nav>
+
+  <!-- Nanti konten kita masukkan di sini -->
+  <div style="padding-top: 20px; padding-bottom: 20px;">
+    <div>
+      <a href="/accounts/add">Tambah Akun Baru</a>
+    </div>
+  <% if(!specific) { %>
+    <!-- Kalau mau baca semuanya -->
+    <table>
+      <theaad>
+        <tr>
+          <th>id</th>
+          <th>account</th>
+          <th>Action</th>
+        </tr>
+      </theaad>
+      <tbody>
+        <% dataAccount.forEach(elem => { %>
+        <tr>
+          <td><%= elem.id %></td>
+          <td><%= elem.account %></td>
+          <td>
+            <a href="/accounts?q=<%= elem.id %>">Detail</a>
+            <a href="/accounts/del/<%= elem.id %>">Delete</a>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+  <!-- Kalau mau baca spesifik -->
+    <table>
+      <theaad>
+        <tr>
+          <th>id</th>
+          <th>account</th>
+          <th>transaction</th>
+          <th>amount</th>
+          <th>btc_address</th>
+          <th>Action</th>
+        </tr>
+      </theaad>
+      <tbody>
+        <% dataAccount.forEach(elem => { %>
+        <tr>
+          <td><%= elem.id %></td>
+          <td><%= elem.account %></td>
+          <td><%= elem.transaction %></td>
+          <td><%= elem.amount %></td>
+          <td><%= elem.btc_address %></td>
+          <td>
+            <a href="/accounts/del/<%= elem.id %>">Delete</a>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+  </div>
+
+  <!-- Ceritanya ini footer -->
+  <footer>
+    &#169; PT. Ini Websiteku Mana Websitemu dot com - 2020
+  </footer>
+</body>
+</html>
+```
+
+Dicatat bahwa pada halaman `views/account-list.ejs` membutuhkan 3
+buah parameter:
+* `title` untuk judul halaman
+* `dataAccount` untuk tampilan data
+* `specific` untuk membedakan antara tampilkan semua atau spesifik
+
+### Langkah 7 - Implementasikan Partials
+Dapat kita lihat bahwa baik pada `views/home.ejs` dan `views/account-list.ejs`
+Memiliki beberapa kesamaan, yaitu sama-sama memiliki `bagian kepala` dan 
+`bagian kaki` yang sama.
+
+Oleh karena itu, kita bisa menggunakan `Partials` pada ejs untuk mengurangi
+redundansi tersebut.
+
+Untuk itu selanjutnya kita akan membuat folder `partials` di dalam folder
+`views` dan kita akan membuat dua file:
+* `views/partials/header.ejs`
+* `views/partials/footer.ejs`
+
+Kemudian kita akan memindahkan bagian yang merupakan header `<nav>`
+pada `views/partials/header.ejs` dan footer `<footer>` pada 
+`views/partials/footer.ejs`.
+
+Sehingga kode pada `views/partials/header.ejs` akan menjadi:
+```html
+<nav>
+  <h1><%= title %></h1>
+  <a href="/">Home</a>
+  <a href="/accounts">Accounts</a>
+</nav>
+```
+
+Kode pada `views/partials/footer.ejs` akan menjadi:
+```html
+<footer>
+  &#169; PT. Ini Websiteku Mana Websitemu dot com - 2020
+</footer>
+```
+
+Kemudian pada `views/home.ejs` dan `views/account-list.ejs` pada bagian
+`header` dan `footer` nya akan kita ganti menjadi
+```html
+...
+  <!-- Ceritanya ini header -->
+  <%- include('partials/header.ejs') %>
+...
+  <!-- Ceritanya ini footer -->
+  <%- include('partials/footer.ejs') %>
+...
+```
+
+Sampai dengan tahap ini, artinya untuk views nya sudah terbentuk dengan baik dan sudah mengimplementasikan partial dengan baik.
+
+Horeeee bahan kita sudah selesai !
+
+Tinggal mencobanya ^_^
+
+### Langkah 8 - Membuat models/account.js
+Selanjutnya, untuk mempermudah kita akan coba untuk membuat `models/account.js`
+yang akan merepresentasikan data `Account` nya.
+
+file ini akan direpresentasikan dalam bentuk Class dan memiliki 2 buah method:
+* findAll untuk mencari semua Akun dalam tabel.
+* findSpecific untuk mencari Akun spesifik dalam tabel.
+
+Jangan lupa juga karena file ini akan berinteraksi langsung dengan 
+database, maka akan membutuhkan require dari config yang sudah dibuat.
+
+File ini akan kita representasikan dalam kode sebagai berikut:
+```javascript
+const pool = require('../config/config.js');
+
+class Account {
+  constructor(id, account, transaction, amount, btc_address) {
+    this.id = id;
+    this.account = account;
+    this.transaction = transaction;
+    this.amount = amount;
+    this.btc_address = btc_address;
+  }
+
+  // digunakan pada GET /accounts
+  // menerima 1 parameter callback
+  //   callback menerima 2 parameter
+  //     err <-- Untuk hasil bila error
+  //     result <-- Untuk output hasil
+  static findAll(callback) {
+    let textQuery =
+      `SELECT id, account, transaction, amount, btc_address
+       FROM "Accounts"`;
+
+    pool.query(textQuery, (err, result) => {
+      if (err) {
+        callback(err, null);
+      }
+      else {
+        let data = result.rows;
+
+        data = data.map(elem => {
+          return new Account(
+            elem.id,
+            elem.account,
+            elem.transaction,
+            elem.amount,
+            elem.btc_address
+          );
+        });
+
+        callback(null, data);
+      }
+    });
+  }
+
+  // digunakan pada GET /accounts?q=id
+  // menerima 2 parameter: id dan callback
+  //   id untuk mencari spesifik yang mana
+  //   callback menerima 2 parameter
+  //     err <-- Untuk hasil bila error
+  //     result <-- Untuk output hasil
+  static findOne(id, callback) {
+    let textQuery =
+      `SELECT id, account, transaction, amount, btc_address
+       FROM "Accounts" 
+       WHERE id=$1`;
+
+    let arrValues = [id];
+
+    pool.query(textQuery, arrValues, (err, result) => {
+      if (err) {
+        callback(err, null);
+      }
+      else {
+        let data = result.rows;
+
+        data = data.map(elem => {
+          return new Account(
+            elem.id,
+            elem.account,
+            elem.transaction,
+            elem.amount,
+            elem.btc_address
+          );
+        });
+
+        callback(null, data);
+      }
+    });
+  }
+}
+
+module.exports = Account;
+```
+
+Sampai dengan tahap ini, artinya kita sudah berhasil menuliskan kode untuk
+berhubungan dengan database. Selanjutnya kita akan membuat controller yang
+dibutuhkan untuk menerima input dari browser / user.
+
+### Langkah 9 - Membuat controllers/controller.js
+
+
 
 ## Additional - Review CR-D
 Misalnya sekarang kita akan menambahkan beberapa endpoint sehingga menjadi sbb:

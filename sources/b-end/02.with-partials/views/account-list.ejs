@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+</head>
+<body>
+  <!-- Ceritanya ini header -->
+  <%- include('partials/header.ejs') %>
+
+  <!-- Nanti konten kita masukkan di sini -->
+  <div style="padding-top: 20px; padding-bottom: 20px;">
+    <div>
+      <a href="/accounts/add">Tambah Akun Baru</a>
+    </div>
+  <% if(!specific) { %>
+    <!-- Kalau mau baca semuanya -->
+    <table>
+      <theaad>
+        <tr>
+          <th>id</th>
+          <th>account</th>
+          <th>Action</th>
+        </tr>
+      </theaad>
+      <tbody>
+        <% dataAccount.forEach(elem => { %>
+        <tr>
+          <td><%= elem.id %></td>
+          <td><%= elem.account %></td>
+          <td>
+            <a href="/accounts?q=<%= elem.id %>">Detail</a>
+            <a href="/accounts/del/<%= elem.id %>">Delete</a>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+  <!-- Kalau mau baca spesifik -->
+    <table>
+      <theaad>
+        <tr>
+          <th>id</th>
+          <th>account</th>
+          <th>transaction</th>
+          <th>amount</th>
+          <th>btc_address</th>
+          <th>Action</th>
+        </tr>
+      </theaad>
+      <tbody>
+        <% dataAccount.forEach(elem => { %>
+        <tr>
+          <td><%= elem.id %></td>
+          <td><%= elem.account %></td>
+          <td><%= elem.transaction %></td>
+          <td><%= elem.amount %></td>
+          <td><%= elem.btc_address %></td>
+          <td>
+            <a href="/accounts/del/<%= elem.id %>">Delete</a>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+  </div>
+
+  <!-- Ceritanya ini footer -->
+  <%- include('partials/footer.ejs') %>
+</body>
+</html>
