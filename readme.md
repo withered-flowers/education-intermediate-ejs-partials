@@ -352,13 +352,13 @@ Selanjutnya untuk `views/account-list.ejs`:
   <% if(!specific) { %>
     <!-- Kalau mau baca semuanya -->
     <table>
-      <theaad>
+      <thead>
         <tr>
           <th>id</th>
           <th>account</th>
           <th>Action</th>
         </tr>
-      </theaad>
+      </thead>
       <tbody>
         <% dataAccount.forEach(elem => { %>
         <tr>
@@ -375,7 +375,7 @@ Selanjutnya untuk `views/account-list.ejs`:
   <% } else { %>
   <!-- Kalau mau baca spesifik -->
     <table>
-      <theaad>
+      <thead>
         <tr>
           <th>id</th>
           <th>account</th>
@@ -384,7 +384,7 @@ Selanjutnya untuk `views/account-list.ejs`:
           <th>btc_address</th>
           <th>Action</th>
         </tr>
-      </theaad>
+      </thead>
       <tbody>
         <% dataAccount.forEach(elem => { %>
         <tr>
